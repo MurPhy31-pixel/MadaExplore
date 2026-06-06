@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madagascar Explorer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body>
+    <!-- Navigation supérieure -->
+    <nav class="top-nav glass">
+        <div class="nav-brand">
+            <div class="logo-icon"><i class="fas fa-compass"></i></div>
+            <div class="logo-text"><span class="logo-main">Mada</span><span class="logo-accent">Explorer</span></div>
+        </div>
+        <div class="nav-actions">
+            <button class="nav-btn" id="btnTop"><i class="fas fa-trophy"></i><span>Top</span></button>
+            <button class="nav-btn active" id="btnExplore"><i class="fas fa-globe-africa"></i><span>Explorer</span></button>
+            <div class="nav-divider"></div>
+            <div class="stats-pill"><i class="fas fa-database"></i><span id="totalCount">0</span><span class="stats-label">lieux</span></div>
+        </div>
+    </nav>
+
+    <!-- Panneau de recherche (façon Google Maps) -->
+<div class="search-panel">
+    <div class="search-main">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-input" placeholder="Où voulez-vous aller ?" autocomplete="off" />
+            <button class="clear-search" id="clearSearch"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="search-actions">
+            <!-- Bouton filtre avancé dans la barre -->
+            <button class="btn-filter-toggle" id="toggleFilters">
+                <i class="fas fa-sliders-h"></i>
+                <span class="filter-dot" id="filterDot"></span>
+            </button>
+            <button class="search-submit" id="search-btn">
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtres rapides -->
+    <div class="quick-filters" id="quickFilters"></div>
+
+    <!-- Filtres avancés (déployables) -->
+    <div class="advanced-filters" id="advancedFilters">
+        <div class="filter-grid">
+            <div class="filter-item">
+                <i class="fas fa-city"></i>
+                <select id="city-filter"><option value="">Toutes les villes</option></select>
+            </div>
+            <div class="filter-item">
+                <i class="fas fa-star"></i>
+                <select id="rating-filter"><option value="">Toutes les notes</option><option value="5">5 ★</option><option value="4">4 ★ et +</option><option value="3">3 ★ et +</option></select>
+            </div>
+            <div class="filter-item">
+                <i class="fas fa-smile"></i>
+                <select id="sentiment-filter"><option value="">Tous sentiments</option><option value="positive">😊 Positif</option><option value="neutral">😐 Neutre</option><option value="negative">😞 Négatif</option></select>
+            </div>
+            <div class="filter-item">
+                <i class="fas fa-cloud-sun"></i>
+                <select id="season-filter"><option value="">Toutes saisons</option><option value="dry">☀️ Sèche</option><option value="wet">🌧️ Humide</option></select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggestions (panneau façon Google Maps) -->
+    <div class="suggestions-panel" id="suggestionsContainer">
+        <div class="suggestions-panel-header">🔍 Suggestions</div>
+        <div class="suggestions-list" id="suggestionsList"></div>
+    </div>
+
+    <!-- Info résultats -->
+    <div class="results-info" id="resultsInfo"></div>
+</div>
+
+    <!-- Carte -->
+    <div class="map-container">
+        <div id="map"></div>
+        <div class="empty-state" id="emptyState">
+            <div class="empty-state-icon">🔍</div>
+            <h3>Aucun lieu trouvé</h3>
+            <p>Essayez d'autres mots-clés</p>
+        </div>
+        <div class="map-controls">
+            <button class="map-ctrl-btn" id="locateBtn"><i class="fas fa-location-crosshairs"></i></button>
+            <button class="map-ctrl-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+            <button class="map-ctrl-btn" id="resetViewBtn"><i class="fas fa-home"></i></button>
+        </div>
+    </div>
+
+    <!-- Panneau de détail -->
+    <div class="detail-overlay" id="detailOverlay"></div>
+    <div class="detail-panel" id="detailPanel">
+        <div class="panel-handle"></div>
+        <div class="panel-header">
+            <div class="panel-header-content">
+                <span class="panel-badge" id="panelBadge"></span>
+                <h2 id="detailTitle"></h2>
+            </div>
+            <button class="panel-close" id="btnClosePanel"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="panel-body" id="detailBody"></div>
+        <div class="panel-footer">
+            <button class="btn-add-review" id="btnAddReview"><i class="fas fa-pen"></i><span>Rédiger un avis</span></button>
+        </div>
+    </div>
+
+    <!-- Modale avis -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal-card glass-heavy">
+            <div class="modal-header">
+                <h3>Partagez votre expérience</h3>
+                <button class="modal-close" id="btnCloseModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Votre pseudo</label>
+                    <input type="text" id="reviewPseudo" placeholder="Anonyme" class="input-styled" />
+                </div>
+                <div class="form-group">
+                    <label>Votre note</label>
+                    <div class="star-rating" id="starRating">
+                        <i class="far fa-star" data-value="1"></i>
+                        <i class="far fa-star" data-value="2"></i>
+                        <i class="far fa-star" data-value="3"></i>
+                        <i class="far fa-star" data-value="4"></i>
+                        <i class="far fa-star" data-value="5"></i>
+                    </div>
+                    <input type="hidden" id="reviewRating" value="0" />
+                </div>
+                <div class="form-group">
+                    <label>Votre commentaire</label>
+                    <textarea id="reviewComment" rows="4" placeholder="Décrivez votre expérience..." class="input-styled"></textarea>
+                </div>
+                <button class="btn-submit" id="btnSubmitReview"><i class="fas fa-paper-plane"></i><span>Publier</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div class="global-loader" id="globalLoader"><div class="loader-pulse"></div></div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="static/js/script.js"></script>
+</body>
+</html>

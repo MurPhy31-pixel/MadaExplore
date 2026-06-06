@@ -1,0 +1,5 @@
+venv/
+__pycache__/
+*.pyc
+*.db
+madagascar_tourism_dataset.csv
