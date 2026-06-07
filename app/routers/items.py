@@ -260,31 +260,37 @@ suggest_router = APIRouter()
 @suggest_router.get("/")
 async def suggerer_lieux(q: str = Query(..., min_length=2)):
     """
-    Auto-complétion des noms de lieux via Elasticsearch.
-    Retourne jusqu'à 8 suggestions distinctes.
+    Auto-complétion via recherche directe dans Elasticsearch.
     """
     es = get_es_client()
+    
     result = es.search(index="hotspots", body={
         "query": {
-            "match_phrase_prefix": {
-                "place_name": q
+            "query_string": {
+                "query": f"*{q}*",
+                "fields": ["place_name", "city"],
+                "default_operator": "OR"
             }
         },
-        "size": 0,
-        "aggs": {
-            "suggestions": {
-                "terms": {
-                    "field": "place_name.keyword",
-                    "include": f".*{q}.*",
-                    "size": 8
-                }
-            }
-        }
+        "size": 20,
+        "_source": ["place_name", "category", "city"]
     })
-    suggestions = [bucket["key"] for bucket in result["aggregations"]["suggestions"]["buckets"]]
+    
+    suggestions = []
+    seen = set()
+    for hit in result["hits"]["hits"]:
+        name = hit["_source"].get("place_name", "")
+        if name and name not in seen:
+            seen.add(name)
+            suggestions.append({
+                "name": name,
+                "category": hit["_source"].get("category", ""),
+                "city": hit["_source"].get("city", "")
+            })
+        if len(suggestions) >= 8:
+            break
+    
     return suggestions
-
-
 # ========== ROUTER AVIS ==========
 avis_router = APIRouter()
 

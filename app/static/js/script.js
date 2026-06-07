@@ -161,7 +161,6 @@ function updateFilterBadge() {
     }
 }
 
-// ========== RECHERCHE ==========
 async function searchHotspots(query = '', category = '') {
     showLoader(true);
     els.emptyState.style.display = 'none';
@@ -175,33 +174,42 @@ async function searchHotspots(query = '', category = '') {
     
     updateFilterBadge();
     
-    // Problème 2 : utiliser wildcard pour les sous-chaînes
-    let url = '/hotspots/?limit=300';
-    if (q) url += `&q=${encodeURIComponent(q)}`;
-    if (cat) url += `&categorie=${encodeURIComponent(cat)}`;
-    if (city) url += `&city=${encodeURIComponent(city)}`;
-    if (rating) url += `&rating_min=${rating}`;
-    if (sentiment) url += `&sentiment=${sentiment}`;
-    if (season) url += `&season=${season}`;
+    let url = '/hotspots/?limit=500';
+    if (city) url += '&city=' + encodeURIComponent(city);
+    if (cat) url += '&categorie=' + encodeURIComponent(cat);
+    if (rating) url += '&rating_min=' + rating;
+    if (sentiment) url += '&sentiment=' + sentiment;
+    if (season) url += '&season=' + season;
     
     try {
         const res = await fetch(url);
         const data = await res.json();
         
-        displayMarkers(data.resultats);
+        let results = data.resultats || [];
         
-        // Problème 3 : badge se met à jour
-        els.totalCount.textContent = data.total || 0;
-        els.resultsInfo.textContent = `${data.total || 0} lieu(x) trouvé(s)`;
-        els.resultsInfo.style.display = 'block';
-        
-        // Problème 9 : masquer la légende si aucun résultat
-        const legendEl = document.getElementById('mapLegend');
-        if (legendEl) {
-            legendEl.style.display = (!data.resultats || data.resultats.length === 0) ? 'none' : 'block';
+        // FILTRAGE CÔTÉ CLIENT (car l'API ne filtre pas par q)
+        if (q && results.length > 0) {
+            const searchTerm = q.toLowerCase();
+            results = results.filter(function(r) {
+                const name = (r.place_name || '').toLowerCase();
+                const catName = (r.category || '').toLowerCase();
+                const cityName = (r.city || '').toLowerCase();
+                return name.includes(searchTerm) || catName.includes(searchTerm) || cityName.includes(searchTerm);
+            });
         }
         
-        if (!data.resultats || data.resultats.length === 0) {
+        displayMarkers(results);
+        
+        els.totalCount.textContent = results.length;
+        els.resultsInfo.textContent = results.length + ' lieu(x) trouvé(s)';
+        els.resultsInfo.style.display = 'block';
+        
+        const legendEl = document.getElementById('mapLegend');
+        if (legendEl) {
+            legendEl.style.display = (results.length === 0) ? 'none' : 'block';
+        }
+        
+        if (results.length === 0) {
             els.emptyState.style.display = 'flex';
         }
     } catch (e) {
@@ -270,7 +278,8 @@ function displayMarkers(hotspots) {
     }
 }
 
-// ========== SUGGESTIONS ==========
+// ========== SUGGESTIONS (CORRIGÉE) ==========
+// ========== SUGGESTIONS (UTILISE /hotspots/) ==========
 function setupSuggestions() {
     els.searchInput.addEventListener('input', () => {
         clearTimeout(suggestTimer);
@@ -286,24 +295,43 @@ function setupSuggestions() {
         
         suggestTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`/suggest/?q=${encodeURIComponent(val)}`);
+                // Utiliser /hotspots/ pour les suggestions
+                const res = await fetch('/hotspots/?q=' + encodeURIComponent(val) + '&limit=8');
                 const data = await res.json();
                 const list = document.getElementById('suggestionsList');
                 if (!list) return;
                 
-                if (data.length > 0) {
-                    // Problème 5 : suggestions avec vraies infos (nom seulement pour l'instant)
-                    list.innerHTML = data.map((s, i) => `
-                        <div class="suggestion-item" data-index="${i}" data-value="${escapeHtml(s)}">
-                            <div class="suggestion-icon"><i class="fas fa-map-marker-alt"></i></div>
-                            <div class="suggestion-info">
-                                <div class="suggestion-name">${escapeHtml(s)}</div>
-                                <div class="suggestion-detail">Lieu touristique</div>
-                            </div>
-                        </div>
-                    `).join('');
+                const spots = data.resultats || [];
+                
+                if (spots.length > 0) {
+                    // Dédupliquer par place_id
+                    const seen = new Set();
+                    const uniques = [];
+                    spots.forEach(function(s) {
+                        if (!seen.has(s.place_id)) {
+                            seen.add(s.place_id);
+                            uniques.push(s);
+                        }
+                    });
+                    
+                    list.innerHTML = uniques.map(function(s, i) {
+                        var name = s.place_name || '';
+                        var category = s.category || '';
+                        var city = s.city || '';
+                        var detail = category;
+                        if (category && city) detail += ' · ';
+                        detail += city;
+                        
+                        return '<div class="suggestion-item" data-index="' + i + '" data-value="' + escapeHtml(name) + '" data-id="' + (s.place_id || '') + '">' +
+                            '<div class="suggestion-icon"><i class="fas fa-map-marker-alt"></i></div>' +
+                            '<div class="suggestion-info">' +
+                                '<div class="suggestion-name">' + escapeHtml(name) + '</div>' +
+                                '<div class="suggestion-detail">' + escapeHtml(detail) + '</div>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
                 } else {
-                    list.innerHTML = `<div class="suggestions-empty">Aucun lieu trouvé</div>`;
+                    list.innerHTML = '<div class="suggestions-empty">Aucun lieu trouvé</div>';
                 }
                 els.suggestionsContainer.classList.add('show');
             } catch (e) {
@@ -312,8 +340,8 @@ function setupSuggestions() {
         }, 200);
     });
 
-    els.searchInput.addEventListener('keydown', (e) => {
-        const items = document.querySelectorAll('#suggestionsList .suggestion-item');
+    els.searchInput.addEventListener('keydown', function(e) {
+        var items = document.querySelectorAll('#suggestionsList .suggestion-item');
         if (!items.length || !els.suggestionsContainer.classList.contains('show')) return;
         
         if (e.key === 'ArrowDown') {
@@ -324,17 +352,26 @@ function setupSuggestions() {
             e.preventDefault();
             activeSuggestionIndex = Math.max(activeSuggestionIndex - 1, 0);
             updateActive(items);
-        } else if (e.key === 'Enter' && activeSuggestionIndex >= 0) {
+        } else if (e.key === 'Enter') {
             e.preventDefault();
-            const value = items[activeSuggestionIndex]?.dataset.value;
-            if (value) selectSuggestion(value);
+            if (activeSuggestionIndex >= 0 && activeSuggestionIndex < items.length) {
+                var item = items[activeSuggestionIndex];
+                var id = item.dataset.id;
+                var value = item.dataset.value;
+                if (id) {
+                    selectSuggestionById(id, value);
+                }
+            } else if (els.searchInput.value.trim()) {
+                els.suggestionsContainer.classList.remove('show');
+                searchHotspots();
+            }
         } else if (e.key === 'Escape') {
             els.suggestionsContainer.classList.remove('show');
             activeSuggestionIndex = -1;
         }
     });
 
-    els.clearSearch.addEventListener('click', () => {
+    els.clearSearch.addEventListener('click', function() {
         els.searchInput.value = '';
         els.clearSearch.style.display = 'none';
         els.suggestionsContainer.classList.remove('show');
@@ -343,18 +380,68 @@ function setupSuggestions() {
         searchHotspots();
     });
 
-    els.suggestionsContainer.addEventListener('click', (e) => {
-        const item = e.target.closest('.suggestion-item');
+    
+    // Événement click sur les suggestions
+    document.getElementById('suggestionsList').addEventListener('click', function(e) {
+        var item = e.target.closest('.suggestion-item');
         if (!item) return;
-        selectSuggestion(item.dataset.value);
+    
+        var nameEl = item.querySelector('.suggestion-name');
+        if (!nameEl) return;
+    
+        var value = nameEl.textContent.trim();
+        console.log('✅ Suggestion cliquée:', value);
+    
+        document.getElementById('search-input').value = value;
+        document.getElementById('clearSearch').style.display = 'flex';
+        document.getElementById('suggestionsContainer').classList.remove('show');
+        activeSuggestionIndex = -1;
+    
+        if (typeof searchHotspots === 'function') {
+            searchHotspots(value);
+        }
     });
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', function(e) {
         if (!els.suggestionsContainer.contains(e.target) && e.target !== els.searchInput) {
             els.suggestionsContainer.classList.remove('show');
             activeSuggestionIndex = -1;
         }
     });
+}
+
+// Fonction pour sélectionner un lieu par son ID
+function selectSuggestionById(placeId, placeName) {
+    if (!placeId) return;
+    els.searchInput.value = placeName || '';
+    els.clearSearch.style.display = 'flex';
+    els.suggestionsContainer.classList.remove('show');
+    activeSuggestionIndex = -1;
+    
+    // Chercher ce lieu précis par ID
+    showLoader(true);
+    els.emptyState.style.display = 'none';
+    
+    fetch('/hotspots/?place_id=' + encodeURIComponent(placeId) + '&limit=1')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.resultats && data.resultats.length > 0) {
+                displayMarkers(data.resultats);
+                els.totalCount.textContent = '1';
+                els.resultsInfo.textContent = '📍 ' + (placeName || data.resultats[0].place_name);
+                els.resultsInfo.style.display = 'block';
+                
+                var lieu = data.resultats[0];
+                openDetail(lieu.place_id, lieu.place_name);
+            }
+        })
+        .catch(function(e) {
+            console.error('Erreur:', e);
+            showToast('Lieu non trouvé');
+        })
+        .finally(function() {
+            showLoader(false);
+        });
 }
 
 function updateActive(items) {
@@ -385,6 +472,7 @@ function escapeHtml(text) {
 async function openDetail(placeId, placeName) {
     selectedPlaceId = placeId;
     els.detailTitle.textContent = placeName;
+    
     
     els.detailBody.innerHTML = `
         <div style="text-align:center;padding:40px 0;">
@@ -798,6 +886,24 @@ function setupEvents() {
     });
 
     els.btnExplore.addEventListener('click', resetAll);
+}
+
+// ========== PARTAGE DE LIEU ==========
+function sharePlace(name, url) {
+    const shareData = {
+        title: name,
+        text: `Découvrez ${name} sur Madagascar Explorer ! 🇲🇬`,
+        url: url || window.location.href
+    };
+    
+    if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+    } else {
+        // Fallback : copier le lien
+        navigator.clipboard.writeText(shareData.url).then(() => {
+            showToast('📋 Lien copié !');
+        });
+    }
 }
 
 // ========== DÉMARRER ==========

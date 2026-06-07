@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/css/style.css" />
 </head>
 <body>
-    <!-- Navigation supérieure -->
-    <nav class="top-nav glass">
+    <!-- Navigation dock (bas de page) -->
+    <nav class="top-nav">
         <div class="nav-brand">
             <div class="logo-icon"><i class="fas fa-compass"></i></div>
             <div class="logo-text"><span class="logo-main">Mada</span><span class="logo-accent">Explorer</span></div>
@@ -26,60 +26,62 @@
         </div>
     </nav>
 
-    <!-- Panneau de recherche (façon Google Maps) -->
-<div class="search-panel">
-    <div class="search-main">
-        <div class="search-input-wrapper">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" id="search-input" placeholder="Où voulez-vous aller ?" autocomplete="off" />
-            <button class="clear-search" id="clearSearch"><i class="fas fa-times"></i></button>
+    <!-- Ligne top : searchbar + chips côte à côte -->
+    <div class="search-panel">
+        <div class="search-row">
+            <!-- Searchbar -->
+            <div class="search-main">
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Où voulez-vous aller ?" autocomplete="off" />
+                    <button class="clear-search" id="clearSearch"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="search-actions">
+                    <button class="btn-filter-toggle" id="toggleFilters">
+                        <i class="fas fa-sliders-h"></i>
+                        <span class="filter-dot" id="filterDot"></span>
+                    </button>
+                    <button class="search-submit" id="search-btn">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chips catégories à droite -->
+            <div class="quick-filters" id="quickFilters"></div>
         </div>
-        <div class="search-actions">
-            <!-- Bouton filtre avancé dans la barre -->
-            <button class="btn-filter-toggle" id="toggleFilters">
-                <i class="fas fa-sliders-h"></i>
-                <span class="filter-dot" id="filterDot"></span>
-            </button>
-            <button class="search-submit" id="search-btn">
-                <i class="fas fa-arrow-right"></i>
-            </button>
-        </div>
-    </div>
 
-    <!-- Filtres rapides -->
-    <div class="quick-filters" id="quickFilters"></div>
-
-    <!-- Filtres avancés (déployables) -->
-    <div class="advanced-filters" id="advancedFilters">
-        <div class="filter-grid">
-            <div class="filter-item">
-                <i class="fas fa-city"></i>
-                <select id="city-filter"><option value="">Toutes les villes</option></select>
-            </div>
-            <div class="filter-item">
-                <i class="fas fa-star"></i>
-                <select id="rating-filter"><option value="">Toutes les notes</option><option value="5">5 ★</option><option value="4">4 ★ et +</option><option value="3">3 ★ et +</option></select>
-            </div>
-            <div class="filter-item">
-                <i class="fas fa-smile"></i>
-                <select id="sentiment-filter"><option value="">Tous sentiments</option><option value="positive">😊 Positif</option><option value="neutral">😐 Neutre</option><option value="negative">😞 Négatif</option></select>
-            </div>
-            <div class="filter-item">
-                <i class="fas fa-cloud-sun"></i>
-                <select id="season-filter"><option value="">Toutes saisons</option><option value="dry">☀️ Sèche</option><option value="wet">🌧️ Humide</option></select>
+        <!-- Filtres avancés (sous la ligne) -->
+        <div class="advanced-filters" id="advancedFilters">
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <i class="fas fa-city"></i>
+                    <select id="city-filter"><option value="">Toutes les villes</option></select>
+                </div>
+                <div class="filter-item">
+                    <i class="fas fa-star"></i>
+                    <select id="rating-filter"><option value="">Toutes les notes</option><option value="5">5 ★</option><option value="4">4 ★ et +</option><option value="3">3 ★ et +</option></select>
+                </div>
+                <div class="filter-item">
+                    <i class="fas fa-smile"></i>
+                    <select id="sentiment-filter"><option value="">Tous sentiments</option><option value="positive">😊 Positif</option><option value="neutral">😐 Neutre</option><option value="negative">😞 Négatif</option></select>
+                </div>
+                <div class="filter-item">
+                    <i class="fas fa-cloud-sun"></i>
+                    <select id="season-filter"><option value="">Toutes saisons</option><option value="dry">☀️ Sèche</option><option value="wet">🌧️ Humide</option></select>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Suggestions (panneau façon Google Maps) -->
-    <div class="suggestions-panel" id="suggestionsContainer">
-        <div class="suggestions-panel-header">🔍 Suggestions</div>
-        <div class="suggestions-list" id="suggestionsList"></div>
-    </div>
+        <!-- Suggestions -->
+        <div class="suggestions-panel" id="suggestionsContainer">
+            <div class="suggestions-panel-header">🔍 Suggestions</div>
+            <div class="suggestions-list" id="suggestionsList"></div>
+        </div>
 
-    <!-- Info résultats -->
-    <div class="results-info" id="resultsInfo"></div>
-</div>
+        <!-- Info résultats -->
+        <div class="results-info" id="resultsInfo"></div>
+    </div>
 
     <!-- Carte -->
     <div class="map-container">
@@ -115,7 +117,7 @@
 
     <!-- Modale avis -->
     <div class="modal-overlay" id="reviewModal">
-        <div class="modal-card glass-heavy">
+        <div class="modal-card">
             <div class="modal-header">
                 <h3>Partagez votre expérience</h3>
                 <button class="modal-close" id="btnCloseModal"><i class="fas fa-times"></i></button>
