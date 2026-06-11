@@ -14,11 +14,11 @@ Fonctionnalités
 
 Technologies utilisées
 
-Frontend: HTML5, CSS3, JavaScript, Leaflet.js, MarkerCluster
-Backend FastAPI (Python)
-Moteur de recherche: Elasticsearch 8.11 (conteneur Docker)
-Authentification: Token SHA-256, stockage JSON
-Déploiement Docker
+- Frontend: HTML5, CSS3, JavaScript, Leaflet.js, MarkerCluster
+- Backend FastAPI (Python)
+- Moteur de recherche: Elasticsearch 8.11 (conteneur Docker)
+- Authentification: Token SHA-256, stockage JSON
+- Déploiement Docker
 
 Cas d'usage
 
