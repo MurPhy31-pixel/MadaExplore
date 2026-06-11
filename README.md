@@ -1,6 +1,6 @@
 MadaExplore
 
-Application web de cartographie interactive et d'agrégation d'avis touristiques pour Madagascar.
+ce projet est une Application web de cartographie interactive et d'agrégation d'avis touristiques pour Madagascar.
 MadaExplore centralise et géolocalise des avis touristiques sur une carte interactive, permettant aux voyageurs de rechercher, filtrer, comparer et noter les meilleurs lieux de Madagascar en temps réel.
 
 Fonctionnalités
