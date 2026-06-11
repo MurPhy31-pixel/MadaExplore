@@ -38,7 +38,7 @@ Résultats
 
 Installation
 Bash
-- git clone https://github.com/Murphy31-pixel/MadaExplore.git
+- git clone https://github.com/Herizo3101/MadaExplore.git
 - cd MadaExplore
 - python -m venv venv && source venv/bin/activate
 - pip install -r requirements.txt
