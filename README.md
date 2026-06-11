@@ -5,10 +5,10 @@ MadaExplore centralise et géolocalise des avis touristiques sur une carte inter
 
 Fonctionnalités
 
-Carte interactive : visualisation de lieux géolocalisés avec clusters colorés
-Recherche full-text: suggestions en temps réel avec fuzzy matching tolérant les fautes de frappe
-Filtres avancés: 14 catégories, 100+ villes, note, sentiment, saison, prix
-Notation & avis: dépôt d'avis avec anti-spam (1 avis par utilisateur par lieu)
+- Carte interactive : visualisation de lieux géolocalisés avec clusters colorés
+- Recherche full-text: suggestions en temps réel avec fuzzy matching tolérant les fautes de frappe
+- Filtres avancés: 14 catégories, 100+ villes, note, sentiment, saison, prix
+- Notation & avis: dépôt d'avis avec anti-spam (1 avis par utilisateur par lieu)
 - Statistiques détaillées: note moyenne, score de satisfaction, analyse de sentiment, fréquentation saisonnière
 - Comptes utilisateurs: inscription, connexion, avatar personnalis.
 
