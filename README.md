@@ -37,11 +37,12 @@ Résultats
 - Statistiques automatiques par lieu
 
 Installation
-
-git clone https://github.com/Murphy31-pixel/MadaExplore.git
-cd MadaExplore
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-docker run -d --name elasticsearch -p 9200:9200 -e "discovery.type=single-node" -e "xpack.security.enabled=false" docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-python charger_dataset.py
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+Bash
+- git clone https://github.com/Murphy31-pixel/MadaExplore.git
+- cd MadaExplore
+- python -m venv venv && source venv/bin/activate
+- pip install -r requirements.txt
+- docker run -d --name elasticsearch -p 9200:9200 -e "discovery.type=single-node" -e "xpack.security.enabled=false" -
+- docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+- python charger_dataset.py
+- uvicorn main:app --reload --host 0.0.0.0 --port 8000
